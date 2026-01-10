@@ -94,12 +94,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     AsyncStorage.getItem(THEME_KEY).then(saved => {
-      if (saved && ['light', 'dark', 'system'].includes(saved)) {
-        setThemeModeState(saved as ThemeMode);
+      if (!cancelled) {
+        if (saved && ['light', 'dark', 'system'].includes(saved)) {
+          setThemeModeState(saved as ThemeMode);
+        }
+        setIsLoaded(true);
       }
-      setIsLoaded(true);
+    }).catch(error => {
+      if (!cancelled) {
+        console.error('Error loading theme:', error);
+        setIsLoaded(true);
+      }
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isDark = themeMode === 'system' 

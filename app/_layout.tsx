@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -10,6 +10,7 @@ import { InsightCacheProvider } from "@/providers/InsightCacheProvider";
 import { cycleTracking } from "@/services/cycle-tracking";
 import { useAuth } from "@/providers/AuthProvider";
 import { useHealthIntegrations } from "@/hooks/useHealthIntegrations";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -17,25 +18,65 @@ function RootLayoutContent() {
   const { isDark } = useTheme();
   const { user } = useAuth();
   const { syncAllIntegrationsSilent } = useHealthIntegrations();
-  
-  // Initialize cycle mock data and auto-sync on startup
+  const isMountedRef = useRef(true);
+
+  // Initialize cycle data on mount
   useEffect(() => {
-    console.log('🚀 Root Layout: Initializing cycle mock data');
-    cycleTracking.getCycleEntries().then(entries => {
-      console.log('🎯 Root Layout: Got cycle entries:', entries.length);
-    }).catch(err => console.error('❌ Failed to initialize cycle data:', err));
+    let cancelled = false;
+
+    const initializeCycleData = async () => {
+      try {
+        const entries = await cycleTracking.getCycleEntries();
+        if (!cancelled && isMountedRef.current) {
+          console.log('Cycle data initialized:', entries.length, 'entries');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Failed to initialize cycle data:', err);
+        }
+      }
+    };
+
+    initializeCycleData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Auto-sync integrations silently in background when user is authenticated
+  // Auto-sync integrations when user logs in
   useEffect(() => {
-    if (user) {
-      console.log('🔄 Auto-syncing integrations in background...');
-      syncAllIntegrationsSilent().then(success => {
-        if (success) console.log('✅ Background sync completed');
-      }).catch(err => console.error('Background sync error:', err));
-    }
-  }, [user, syncAllIntegrationsSilent]);
-  
+    if (!user) return;
+
+    let cancelled = false;
+
+    const autoSync = async () => {
+      try {
+        const success = await syncAllIntegrationsSilent();
+        if (!cancelled && isMountedRef.current && success) {
+          console.log('Background sync completed');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Background sync error:', err);
+        }
+      }
+    };
+
+    autoSync();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]); // Only depend on user ID, not the function
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
@@ -50,18 +91,20 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <InsightCacheProvider>
-                <RootLayoutContent />
-              </InsightCacheProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <InsightCacheProvider>
+                  <RootLayoutContent />
+                </InsightCacheProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
