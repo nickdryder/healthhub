@@ -12,14 +12,18 @@ const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
  * Setup:
  * 1. Go to https://console.cloud.google.com/apis/credentials
  * 2. Create OAuth 2.0 credentials (Web application)
- * 3. Add redirect URI: https://pxphayzjpfymnunxskan.supabase.co/functions/v1/google-calendar-callback
+ * 3. Add redirect URI: <your-supabase-url>/functions/v1/google-calendar-callback
  * 4. Enable Google Calendar API
  * 5. Store GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET as secrets
  */
 
 class GoogleCalendarService {
   private getRedirectUri(): string {
-    return 'https://pxphayzjpfymnunxskan.supabase.co/functions/v1/google-calendar-callback';
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      throw new Error('EXPO_PUBLIC_SUPABASE_URL not configured');
+    }
+    return `${supabaseUrl}/functions/v1/google-calendar-callback`;
   }
 
   async startAuth(clientId: string): Promise<string | null> {

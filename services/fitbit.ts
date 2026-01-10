@@ -33,9 +33,13 @@ export interface FitbitTokens {
 
 class FitbitService {
   private getRedirectUri(): string {
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      throw new Error('EXPO_PUBLIC_SUPABASE_URL not configured');
+    }
     // Use our Supabase Edge Function as the HTTPS redirect
     // This then redirects to the app via custom URL scheme
-    return 'https://pxphayzjpfymnunxskan.supabase.co/functions/v1/fitbit-callback';
+    return `${supabaseUrl}/functions/v1/fitbit-callback`;
   }
 
   async startAuth(clientId: string): Promise<string | null> {
