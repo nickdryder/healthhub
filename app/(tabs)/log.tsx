@@ -157,9 +157,9 @@ export default function LogScreen() {
           notes: notes || null,
           logged_at: now,
           metadata: {
-            sets: exercise.sets ? parseInt(exercise.sets) : null,
-            reps: exercise.reps ? parseInt(exercise.reps) : null,
-            weight: exercise.weight ? parseFloat(exercise.weight) : null,
+            sets: exercise.sets ? (parseInt(exercise.sets) || null) : null,
+            reps: exercise.reps ? (parseInt(exercise.reps) || null) : null,
+            weight: exercise.weight ? (parseFloat(exercise.weight) || null) : null,
             weight_unit: useMetric ? 'kg' : 'lbs',
           },
         });

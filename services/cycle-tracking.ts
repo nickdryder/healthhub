@@ -30,62 +30,6 @@ class CycleTrackingService {
     return enabled === 'true';
   }
 
-  // MOCK DATA - Only menstruation dates, phases are predicted
-  private async initializeMockData(): Promise<void> {
-    try {
-      console.log('📌 initializeMockData: Starting initialization...');
-      const existing = await AsyncStorage.getItem(CYCLE_DATA_KEY);
-      console.log('📌 initializeMockData: Checking for existing data:', !!existing);
-      
-      if (existing) {
-        console.log('⚠️ initializeMockData: Data already exists, skipping');
-        return;
-      }
-
-      const today = new Date();
-      console.log('📌 initializeMockData: Today is:', today.toISOString().split('T')[0]);
-      
-      // Only log menstruation dates - phases will be predicted from these
-      const mockEntries: CycleEntry[] = [
-        {
-          date: new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          phase: 'menstruation',
-          flow: 'normal',
-          timestamp: Date.now(),
-        },
-        {
-          date: new Date(today.getTime() - 13 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          phase: 'menstruation',
-          flow: 'heavy',
-          timestamp: Date.now(),
-        },
-        {
-          date: new Date(today.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          phase: 'menstruation',
-          flow: 'light',
-          timestamp: Date.now(),
-        },
-      ];
-
-      console.log('📌 initializeMockData: Created mock menstruation entries:', mockEntries.length);
-      
-      // Fill in predicted phases for the rest of the cycle
-      const withPredictions = this.fillInPredictedPhases(mockEntries);
-      
-      const json = JSON.stringify(withPredictions);
-      console.log('📌 initializeMockData: JSON stringified with predictions');
-      
-      const encrypted = await this.encrypt(json);
-      console.log('📌 initializeMockData: Encrypted');
-      
-      await AsyncStorage.setItem(CYCLE_DATA_KEY, encrypted);
-      console.log('✅ MOCK CYCLE DATA LOADED');
-      console.log('📊 Total entries with predictions:', withPredictions.length);
-    } catch (error) {
-      console.error('❌ Error initializing mock data:', error);
-      throw error;
-    }
-  }
 
   // Predict cycle phases based on menstruation dates
   private fillInPredictedPhases(menstruationEntries: CycleEntry[]): CycleEntry[] {
@@ -163,12 +107,13 @@ class CycleTrackingService {
   private async encrypt(data: string): Promise<string> {
     try {
       console.log('encrypt: Encoding data');
-      // Simple base64 encoding using native btoa (available in React Native)
+      // WARNING: This is Base64 encoding, NOT encryption. Data is NOT secure.
+      // TODO: Implement proper AES-256 encryption with expo-crypto for production
       const encoded = btoa(unescape(encodeURIComponent(data)));
       console.log('encrypt: Data encoded');
       return encoded;
     } catch (error) {
-      console.error('Encryption error:', error);
+      console.error('Encoding error:', error);
       throw error;
     }
   }
@@ -176,12 +121,13 @@ class CycleTrackingService {
   private async decrypt(encoded: string): Promise<string> {
     try {
       console.log('decrypt: Decoding data');
-      // Simple base64 decoding using native atob
+      // WARNING: This is Base64 decoding, NOT decryption. Data is NOT secure.
+      // TODO: Implement proper AES-256 decryption with expo-crypto for production
       const decoded = decodeURIComponent(escape(atob(encoded)));
       console.log('decrypt: Data decoded');
       return decoded;
     } catch (error) {
-      console.error('Decryption error:', error);
+      console.error('Decoding error:', error);
       throw error;
     }
   }
@@ -213,19 +159,11 @@ class CycleTrackingService {
 
   async getCycleEntries(): Promise<CycleEntry[]> {
     try {
-      let encrypted = await AsyncStorage.getItem(CYCLE_DATA_KEY);
+      const encrypted = await AsyncStorage.getItem(CYCLE_DATA_KEY);
       console.log('🔍 getCycleEntries: Found encrypted data?', !!encrypted);
-      
-      // MOCK DATA - REMOVE THIS ENTIRE BLOCK WHEN DONE TESTING
-      if (!encrypted) {
-        console.log('📌 getCycleEntries: No data found, initializing mock data...');
-        await this.initializeMockData();
-        encrypted = await AsyncStorage.getItem(CYCLE_DATA_KEY);
-        console.log('✅ getCycleEntries: Mock data initialized, encrypted data?', !!encrypted);
-      }
 
       if (!encrypted) {
-        console.log('❌ getCycleEntries: Still no encrypted data after init');
+        console.log('❌ getCycleEntries: No encrypted data found');
         return [];
       }
 

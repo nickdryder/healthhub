@@ -43,7 +43,7 @@ export function CycleCard() {
     }
   };
 
-  const calculateDaysToMenstruation = (entries: CycleEntry[]): number => {
+  const calculateDaysToMenstruation = (entries: CycleEntry[]): number | null => {
     // Simple estimation based on typical cycle
     // Find last menstruation date
     const menstruationEntries = entries

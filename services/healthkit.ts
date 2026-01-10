@@ -9,13 +9,12 @@ let HealthKit: typeof import('@kingstinct/react-native-healthkit') | null = null
 
 /**
  * Apple Health Integration Service
- * 
- * Works in development builds with @kingstinct/react-native-healthkit.
- * Falls back to mock data in Expo Go or web.
+ *
+ * Requires development builds with @kingstinct/react-native-healthkit.
+ * Only works on iOS devices with native HealthKit support.
  */
 class HealthKitService {
   private isInitialized = false;
-  private isRealHealthKit = false;
 
   async initialize(): Promise<boolean> {
     if (!isHealthKitAvailable) {
@@ -26,7 +25,7 @@ class HealthKitService {
     if (this.isInitialized) return true;
 
     try {
-      // Try to dynamically import HealthKit (only works in dev builds)
+      // Dynamically import HealthKit (only works in dev builds)
       HealthKit = await import('@kingstinct/react-native-healthkit');
 
       const isAvailable = await HealthKit.default.isHealthDataAvailable();
@@ -35,28 +34,25 @@ class HealthKitService {
         return false;
       }
 
-      this.isRealHealthKit = true;
       this.isInitialized = true;
-      console.log('HealthKit initialized successfully (real mode)');
+      console.log('HealthKit initialized successfully');
       return true;
     } catch (error) {
-      // Falls back to mock mode (Expo Go doesn't have native modules)
-      console.log('HealthKit native module not available - using mock mode');
-      console.log('To enable real HealthKit: npx expo prebuild && npx expo run:ios');
-      this.isRealHealthKit = false;
-      this.isInitialized = true;
-      return true;
+      console.error('HealthKit native module not available');
+      console.log('To enable HealthKit: npx expo prebuild && npx expo run:ios');
+      return false;
     }
   }
 
   async requestPermissions(): Promise<boolean> {
     if (!this.isInitialized) {
-      await this.initialize();
+      const initialized = await this.initialize();
+      if (!initialized) return false;
     }
 
-    if (!this.isRealHealthKit || !HealthKit) {
-      console.log('Using mock HealthKit permissions');
-      return true;
+    if (!HealthKit) {
+      console.error('HealthKit module not available');
+      return false;
     }
 
     try {
@@ -84,9 +80,9 @@ class HealthKitService {
   }
 
   async getSteps(startDate: Date, endDate: Date): Promise<number> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      // Mock data
-      return Math.floor(Math.random() * 5000) + 5000;
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return 0;
     }
 
     try {
@@ -102,8 +98,9 @@ class HealthKitService {
   }
 
   async getHeartRate(startDate: Date, endDate: Date): Promise<{ value: number; date: string }[]> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      return [{ value: 65 + Math.floor(Math.random() * 20), date: new Date().toISOString() }];
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return [];
     }
 
     try {
@@ -122,8 +119,9 @@ class HealthKitService {
   }
 
   async getRestingHeartRate(startDate: Date, endDate: Date): Promise<number | null> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      return 60 + Math.floor(Math.random() * 15);
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return null;
     }
 
     try {
@@ -140,8 +138,9 @@ class HealthKitService {
   }
 
   async getHRV(startDate: Date, endDate: Date): Promise<number | null> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      return 30 + Math.floor(Math.random() * 40); // Mock HRV 30-70ms
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return null;
     }
 
     try {
@@ -157,9 +156,9 @@ class HealthKitService {
     }
   }
   async getSleep(startDate: Date, endDate: Date): Promise<{ totalHours: number; quality: number }> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      const totalHours = 6 + Math.random() * 2;
-      return { totalHours: Math.round(totalHours * 10) / 10, quality: Math.floor(70 + Math.random() * 25) };
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return { totalHours: 0, quality: 0 };
     }
 
     try {
@@ -198,8 +197,9 @@ class HealthKitService {
   }
 
   async getActiveCalories(startDate: Date, endDate: Date): Promise<number> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      return Math.floor(Math.random() * 300) + 200;
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return 0;
     }
 
     try {
@@ -215,8 +215,9 @@ class HealthKitService {
   }
 
   async getWeight(startDate: Date, endDate: Date): Promise<number | null> {
-    if (!this.isRealHealthKit || !HealthKit) {
-      return null; // Don't mock weight
+    if (!HealthKit) {
+      console.error('HealthKit not initialized');
+      return null;
     }
 
     try {
@@ -233,16 +234,11 @@ class HealthKitService {
     }
   }
 
-  isUsingRealHealthKit(): boolean {
-    return this.isRealHealthKit;
-  }
-
   async syncToSupabase(userId: string): Promise<boolean> {
     if (!userId) return false;
 
-    // Don't sync mock data - only sync real HealthKit data
-    if (!this.isRealHealthKit) {
-      console.log('Skipping Apple Health sync - mock mode disabled. Create a dev build for real data.');
+    if (!HealthKit) {
+      console.error('HealthKit not initialized - cannot sync');
       return false;
     }
     const now = new Date();

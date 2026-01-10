@@ -69,12 +69,11 @@ export function useHealthMetrics() {
       const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
       const yesterdayEnd = new Date(todayStart.getTime() - 1);
 
-      // Get today's metrics (excluding mock sources to prioritize real data)
+      // Get today's metrics
       const { data: recentData, error: recentError } = await supabase
         .from('health_metrics')
         .select('metric_type, value, unit, metadata, recorded_at, source')
         .eq('user_id', user.id)
-        .neq('source', 'apple_health_mock')
         .gte('recorded_at', todayStart.toISOString())
         .lt('recorded_at', todayEnd.toISOString())
         .order('recorded_at', { ascending: false });
@@ -89,7 +88,6 @@ export function useHealthMetrics() {
         .select('metric_type, value, unit, metadata, recorded_at, source')
         .eq('user_id', user.id)
         .eq('metric_type', 'sleep')
-        .neq('source', 'apple_health_mock')
         .gte('recorded_at', sleepLookback.toISOString())
         .order('recorded_at', { ascending: false })
         .limit(1);
@@ -111,7 +109,6 @@ export function useHealthMetrics() {
         .from('health_metrics')
         .select('metric_type, value')
         .eq('user_id', user.id)
-        .neq('source', 'apple_health_mock')
         .gte('recorded_at', yesterdayStart.toISOString())
         .lte('recorded_at', yesterdayEnd.toISOString());
 

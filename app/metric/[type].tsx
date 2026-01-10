@@ -139,7 +139,6 @@ export default function MetricHistoryScreen() {
     switch (source) {
       case 'fitbit': return 'fitness';
       case 'apple_health': return 'logo-apple';
-      case 'apple_health_mock': return 'logo-apple';
       case 'manual': return 'create';
       default: return 'sync';
     }

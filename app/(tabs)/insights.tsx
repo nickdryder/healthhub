@@ -23,65 +23,6 @@ const filters: { id: InsightFilter; label: string }[] = [
   { id: 'recommendation', label: 'Tips' },
 ];
 
-// Fallback insights when no real data exists
-const fallbackInsights = [
-  {
-    id: '7',
-    type: 'prediction' as const,
-    title: 'Early shift tomorrow',
-    description: 'You have "Morning Shift" at 6:00 AM. Consider going to bed by 10 PM tonight.',
-    confidence: 0.95,
-  },
-  {
-    id: '1',
-    type: 'correlation' as const,
-    title: 'Coffee affects your sleep',
-    description: 'When you have coffee after 2pm, your sleep quality drops by 23% on average.',
-    confidence: 0.87,
-  },
-  {
-    id: '8',
-    type: 'correlation' as const,
-    title: 'Mondays are stressful',
-    description: 'Your heart rate is 12% higher on Mondays. You also report more headaches.',
-    confidence: 0.81,
-  },
-  {
-    id: '9',
-    type: 'recommendation' as const,
-    title: 'Plan rest after busy weeks',
-    description: 'Weeks with 5+ meetings correlate with 30% worse sleep. Next week looks busy.',
-    confidence: 0.76,
-  },
-  {
-    id: '3',
-    type: 'recommendation' as const,
-    title: 'Try earlier dinner',
-    description: 'Your digestion logs suggest eating before 7pm could reduce bloating by 40%.',
-    confidence: 0.91,
-  },
-  {
-    id: '4',
-    type: 'correlation' as const,
-    title: 'Sleep & joint pain link',
-    description: 'Nights with less than 6 hours of sleep correlate with 65% more joint pain reports.',
-    confidence: 0.83,
-  },
-  {
-    id: '5',
-    type: 'prediction' as const,
-    title: 'Good sleep tonight',
-    description: "Based on your activity and no late caffeine, you're likely to sleep well tonight.",
-    confidence: 0.78,
-  },
-  {
-    id: '6',
-    type: 'recommendation' as const,
-    title: 'Consider probiotics',
-    description: 'Your Bristol scale logs show irregular patterns. Probiotics may help normalize digestion.',
-    confidence: 0.69,
-  },
-];
 
 // Calculate health score from real data
 function calculateHealthScore(metrics: any[], logs: any[]): number {
@@ -183,7 +124,6 @@ export default function InsightsScreen() {
           .from('health_metrics')
           .select('metric_type, value, recorded_at')
           .eq('user_id', user.id)
-          .neq('source', 'apple_health_mock')
           .gte('recorded_at', sevenDaysAgo),
         supabase
           .from('manual_logs')
@@ -199,7 +139,7 @@ export default function InsightsScreen() {
   const healthScore = calculateHealthScore(scoreData?.metrics || [], scoreData?.logs || []);
   const dataPointsCount = (scoreData?.metrics?.length || 0) + (scoreData?.logs?.length || 0);
 
-  // Use stored insights or fallback
+  // Use stored insights
   const allInsights = storedInsights && storedInsights.length > 0
     ? storedInsights.map(i => ({
         id: i.id,
@@ -208,7 +148,7 @@ export default function InsightsScreen() {
         description: i.description,
         confidence: i.confidence || 0.75,
       }))
-    : fallbackInsights;
+    : [];
 
   const filteredInsights = activeFilter === 'all' 
     ? allInsights 

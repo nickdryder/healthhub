@@ -227,7 +227,6 @@ export default function HealthScoreScreen() {
           .from('health_metrics')
           .select('metric_type, value, recorded_at')
           .eq('user_id', user.id)
-          .neq('source', 'apple_health_mock')
           .gte('recorded_at', sevenDaysAgo),
         supabase
           .from('manual_logs')
