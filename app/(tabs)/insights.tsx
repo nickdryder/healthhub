@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import { useInsightCache } from '@/providers/InsightCacheProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { colors as staticColors } from '@/constants/colors';
 import { formatSnakeCase } from '@/services/formatting-utils';
+import { SEVEN_DAYS_MS } from '@/constants/time';
 
 type InsightFilter = 'all' | 'correlation' | 'prediction' | 'recommendation';
 
@@ -118,7 +119,7 @@ export default function InsightsScreen() {
     queryKey: ['health-score-summary', user?.id],
     queryFn: async () => {
       if (!user) return { metrics: [], logs: [] };
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
       const [metricsRes, logsRes] = await Promise.all([
         supabase
           .from('health_metrics')
@@ -136,23 +137,62 @@ export default function InsightsScreen() {
     enabled: !!user,
   });
 
-  const healthScore = calculateHealthScore(scoreData?.metrics || [], scoreData?.logs || []);
-  const dataPointsCount = (scoreData?.metrics?.length || 0) + (scoreData?.logs?.length || 0);
+  // Memoize health score calculation
+  const healthScore = useMemo(() =>
+    calculateHealthScore(scoreData?.metrics || [], scoreData?.logs || []),
+    [scoreData]
+  );
 
-  // Use stored insights
-  const allInsights = storedInsights && storedInsights.length > 0
-    ? storedInsights.map(i => ({
-        id: i.id,
-        type: i.insight_type,
-        title: i.title,
-        description: i.description,
-        confidence: i.confidence || 0.75,
-      }))
-    : [];
+  const dataPointsCount = useMemo(() =>
+    (scoreData?.metrics?.length || 0) + (scoreData?.logs?.length || 0),
+    [scoreData]
+  );
 
-  const filteredInsights = activeFilter === 'all' 
-    ? allInsights 
-    : allInsights.filter(i => i.type === activeFilter);
+  // Memoize insights mapping
+  const allInsights = useMemo(() =>
+    storedInsights && storedInsights.length > 0
+      ? storedInsights.map(i => ({
+          id: i.id,
+          type: i.insight_type,
+          title: i.title,
+          description: i.description,
+          confidence: i.confidence || 0.75,
+        }))
+      : [],
+    [storedInsights]
+  );
+
+  // Memoize filtered insights
+  const filteredInsights = useMemo(() =>
+    activeFilter === 'all'
+      ? allInsights
+      : allInsights.filter(i => i.type === activeFilter),
+    [activeFilter, allInsights]
+  );
+
+  // Memoize navigation handlers
+  const handleHealthScorePress = useCallback(() => {
+    router.push('/health-score');
+  }, []);
+
+  const handleInsightPress = useCallback((insight: typeof allInsights[0]) => {
+    return () => {
+      cacheInsight({
+        id: insight.id,
+        type: insight.type as 'correlation' | 'prediction' | 'recommendation',
+        title: insight.title,
+        description: insight.description,
+        confidence: insight.confidence,
+        relatedMetrics: [],
+        createdAt: new Date().toISOString(),
+      });
+      router.push(`/insight/${insight.id}`);
+    };
+  }, [cacheInsight]);
+
+  const handleFilterPress = useCallback((filterId: InsightFilter) => {
+    return () => setActiveFilter(filterId);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -164,7 +204,10 @@ export default function InsightsScreen() {
 
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => router.push('/health-score')}
+          onPress={handleHealthScorePress}
+          accessibilityLabel={`Health score: ${healthScore} out of 100. Based on ${dataPointsCount} data points this week.`}
+          accessibilityRole="button"
+          accessibilityHint="Tap to view detailed health score breakdown"
         >
           <LinearGradient
             colors={[colors.primary, '#8B5CF6']}
@@ -200,8 +243,11 @@ export default function InsightsScreen() {
             <TouchableOpacity
               key={filter.id}
               style={[styles.filterButton, { backgroundColor: colors.card }, activeFilter === filter.id && { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}
-              onPress={() => setActiveFilter(filter.id)}
+              onPress={handleFilterPress(filter.id)}
               activeOpacity={0.7}
+              accessibilityLabel={`Filter by ${filter.label}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeFilter === filter.id }}
             >
               <Text style={[styles.filterLabel, { color: colors.textSecondary }, activeFilter === filter.id && { color: colors.primary }]}>
                 {filter.label}
@@ -218,24 +264,11 @@ export default function InsightsScreen() {
         ) : (
           <View style={styles.insightsList}>
             {filteredInsights.map((insight) => (
-              <InsightCard 
-                key={insight.id} 
-                {...insight} 
-                onPress={() => {
-                  cacheInsight({
-                    id: insight.id,
-                    type: insight.type as 'correlation' | 'prediction' | 'recommendation',
-                    title: insight.title,
-                    description: insight.description,
-                    confidence: insight.confidence,
-                    relatedMetrics: [],
-                    createdAt: new Date().toISOString(),
-                  });
-                  router.push(`/insight/${insight.id}`);
-                }}
-              >
-                <Text style={styles.description}>{formatInsightDescription(insight.description)}</Text>
-              </InsightCard>
+              <InsightCard
+                key={insight.id}
+                {...insight}
+                onPress={handleInsightPress(insight)}
+              />
             ))}
           </View>
         )}
@@ -367,7 +400,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: staticColors.grayDark,
+    color: staticColors.gray700,
     marginTop: 4,
   },
 });

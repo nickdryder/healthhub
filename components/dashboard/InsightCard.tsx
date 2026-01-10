@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,33 +31,50 @@ const typeConfig = {
   },
 };
 
-export function InsightCard({ title, description, type, confidence, onPress }: InsightCardProps) {
+const InsightCardComponent = ({ title, description, type, confidence, onPress }: InsightCardProps) => {
   const { colors } = useTheme();
   const config = typeConfig[type];
 
-  // Format title - convert snake_case to readable format
-  const formattedTitle = title.replace(
-    /([a-z_]+)/g,
-    (match) => {
-      if (match.includes('_')) {
-        return formatSnakeCase(match);
+  // Memoize title formatting to avoid regex on every render
+  const formattedTitle = useMemo(() => {
+    return title.replace(
+      /([a-z_]+)/g,
+      (match) => {
+        if (match.includes('_')) {
+          return formatSnakeCase(match);
+        }
+        return match;
       }
-      return match;
-    }
-  );
-  // When rendering description, format any snake_case symptom names:
-  const formattedDescription = description.replace(
-    /([a-z_]+)/g,
-    (match) => {
-      // Only format if it contains underscores (snake_case pattern)
-      if (match.includes('_')) {
-        return formatSnakeCase(match);
+    );
+  }, [title]);
+
+  // Memoize description formatting to avoid regex on every render
+  const formattedDescription = useMemo(() => {
+    return description.replace(
+      /([a-z_]+)/g,
+      (match) => {
+        // Only format if it contains underscores (snake_case pattern)
+        if (match.includes('_')) {
+          return formatSnakeCase(match);
+        }
+        return match;
       }
-      return match;
-    }
-  );
+    );
+  }, [description]);
+
+  const confidenceText = useMemo(() => {
+    return confidence ? `${Math.round(confidence * 100)}% confident` : undefined;
+  }, [confidence]);
+
   return (
-    <TouchableOpacity style={[styles.card, { backgroundColor: colors.card }]} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: colors.card }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityLabel={`${config.label}: ${formattedTitle}. ${formattedDescription}`}
+      accessibilityRole="button"
+      accessibilityHint="Tap to view insight details"
+    >
       <LinearGradient
         colors={config.gradient}
         start={{ x: 0, y: 0 }}
@@ -69,8 +86,8 @@ export function InsightCard({ title, description, type, confidence, onPress }: I
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={[styles.label, { color: colors.primary }]}>{config.label}</Text>
-          {confidence && (
-            <Text style={[styles.confidence, { color: colors.textSecondary }]}>{Math.round(confidence * 100)}% confident</Text>
+          {confidenceText && (
+            <Text style={[styles.confidence, { color: colors.textSecondary }]}>{confidenceText}</Text>
           )}
         </View>
         <Text style={[styles.title, { color: colors.text }]}>{formattedTitle}</Text>
@@ -79,7 +96,9 @@ export function InsightCard({ title, description, type, confidence, onPress }: I
       <Ionicons name="chevron-forward" size={20} color={colors.gray300} />
     </TouchableOpacity>
   );
-}
+};
+
+export const InsightCard = React.memo(InsightCardComponent);
 
 const styles = StyleSheet.create({
   card: {

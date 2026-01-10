@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,14 +36,19 @@ const logTypes = [
   { id: 'cycle' as const, label: 'Cycle', icon: 'heart-half-outline' as const, color: '#EC4899' },
 ];
 
-function QuickAmount({ label, amount, onPress }: { label: string; amount: string; onPress: () => void }) {
+const QuickAmount = React.memo(({ label, amount, onPress }: { label: string; amount: string; onPress: () => void }) => {
   return (
-    <TouchableOpacity style={styles.quickAmount} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.quickAmount}
+      onPress={onPress}
+      accessibilityLabel={`Set caffeine amount to ${amount} milligrams, ${label}`}
+      accessibilityRole="button"
+    >
       <Text style={styles.quickAmountLabel}>{label}</Text>
       <Text style={styles.quickAmountValue}>{amount}mg</Text>
     </TouchableOpacity>
   );
-}
+});
 
 const UNIT_SYSTEM_KEY = '@health_hub_unit_system';
 export default function LogScreen() {
@@ -265,6 +270,9 @@ export default function LogScreen() {
               style={[styles.typeButton, { backgroundColor: colors.card }, activeType === type.id && { borderColor: colors.primary, backgroundColor: `${colors.primary}08` }]}
               onPress={() => setActiveType(type.id)}
               activeOpacity={0.7}
+              accessibilityLabel={`Log ${type.label}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeType === type.id }}
             >
               <View style={[styles.typeIcon, { backgroundColor: `${type.color}15` }]}>
                 <Ionicons name={type.icon} size={24} color={type.color} />

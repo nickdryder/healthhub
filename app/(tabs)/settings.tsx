@@ -258,7 +258,12 @@ export default function SettingsScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Profile</Text>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <TouchableOpacity onPress={() => router.push('/profile')}>
+              <TouchableOpacity
+                onPress={() => router.push('/profile')}
+                accessibilityLabel="Profile and Goals"
+                accessibilityRole="button"
+                accessibilityHint="View and edit your profile, BMI, height, and health goals"
+              >
                 <SettingRow icon="body-outline" label="Profile & Goals" value="BMI, Height, Goals" hasArrow colors={colors} />
               </TouchableOpacity>
             </View>
@@ -278,6 +283,9 @@ export default function SettingsScreen() {
                   onPress={() => handleConnectIntegration(integration.id, integration.name)}
                   activeOpacity={0.7}
                   disabled={isLoading}
+                  accessibilityLabel={`${integration.name} integration, ${isConnected ? 'connected' : 'not connected'}`}
+                  accessibilityRole="button"
+                  accessibilityHint={isConnected ? `Tap to manage ${integration.name} connection` : `Tap to connect ${integration.name}`}
                 >
                   <View style={[styles.integrationIcon, { backgroundColor: `${integration.color}15` }]}>
                     <Ionicons name={integration.icon} size={22} color={integration.color} />
@@ -297,10 +305,14 @@ export default function SettingsScreen() {
               );
             })}
           </View>
-          <TouchableOpacity 
-            style={[styles.syncButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
-            onPress={handleSyncAll} 
+          <TouchableOpacity
+            style={[styles.syncButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={handleSyncAll}
             disabled={loading.sync_all}
+            accessibilityLabel="Sync all data sources"
+            accessibilityRole="button"
+            accessibilityHint="Synchronize health data from all connected sources"
+            accessibilityState={{ disabled: loading.sync_all }}
           >
             {loading.sync_all ? (
               <ActivityIndicator size="small" color={colors.primary} />
@@ -316,7 +328,15 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>AI Analysis</Text>
           <AnalysisFrequencyPicker value={analysisFrequency} onChange={handleFrequencyChange} />
-          <TouchableOpacity style={[styles.refreshButton, { backgroundColor: colors.primary }]} onPress={refreshInsights} disabled={loading.insights}>
+          <TouchableOpacity
+            style={[styles.refreshButton, { backgroundColor: colors.primary }]}
+            onPress={refreshInsights}
+            disabled={loading.insights}
+            accessibilityLabel="Generate new AI insights"
+            accessibilityRole="button"
+            accessibilityHint="Analyze your health data to generate new insights and recommendations"
+            accessibilityState={{ disabled: loading.insights }}
+          >
             {loading.insights ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
@@ -327,10 +347,14 @@ export default function SettingsScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.dataRequirementsCard, { backgroundColor: colors.card }]}
             onPress={() => setDataRequirementsExpanded(!dataRequirementsExpanded)}
             activeOpacity={0.7}
+            accessibilityLabel="Data requirements for insights"
+            accessibilityRole="button"
+            accessibilityHint={dataRequirementsExpanded ? "Collapse data requirements" : "Expand to view data requirements"}
+            accessibilityState={{ expanded: dataRequirementsExpanded }}
           >
             <View style={styles.dataRequirementsHeader}>
               <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
@@ -389,16 +413,26 @@ export default function SettingsScreen() {
             <SettingRow icon="notifications-outline" label="Push Notifications" hasToggle isEnabled={notificationsEnabled} onToggle={handleNotificationsToggle} colors={colors} />
             {notificationsEnabled && (
               <>
-                <TouchableOpacity onPress={handleWeeklySummaryDayChange}>
-                  <SettingRow 
-                    icon="calendar-outline" 
-                    label="Weekly Summary Day" 
-                    value={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weeklySummaryDay]} 
-                    hasArrow 
-                    colors={colors} 
+                <TouchableOpacity
+                  onPress={handleWeeklySummaryDayChange}
+                  accessibilityLabel={`Weekly summary day, currently ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][weeklySummaryDay]}`}
+                  accessibilityRole="button"
+                  accessibilityHint="Change the day you receive weekly health summaries"
+                >
+                  <SettingRow
+                    icon="calendar-outline"
+                    label="Weekly Summary Day"
+                    value={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weeklySummaryDay]}
+                    hasArrow
+                    colors={colors}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleSendTestSummary}>
+                <TouchableOpacity
+                  onPress={handleSendTestSummary}
+                  accessibilityLabel="Send test summary"
+                  accessibilityRole="button"
+                  accessibilityHint="Send a test notification to verify your notification settings"
+                >
                   <SettingRow icon="paper-plane-outline" label="Send Test Summary" hasArrow colors={colors} />
                 </TouchableOpacity>
               </>
@@ -429,7 +463,14 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Data Export</Text>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <TouchableOpacity onPress={handleExportData} disabled={exporting}>
+            <TouchableOpacity
+              onPress={handleExportData}
+              disabled={exporting}
+              accessibilityLabel="Export health data to CSV"
+              accessibilityRole="button"
+              accessibilityHint="Download all your health data as a CSV file"
+              accessibilityState={{ disabled: exporting }}
+            >
               <SettingRow icon="download-outline" label={exporting ? 'Exporting...' : 'Export Health Data (CSV)'} hasArrow colors={colors} />
             </TouchableOpacity>
           </View>
@@ -442,14 +483,25 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>About</Text>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
             <SettingRow icon="information-circle-outline" label="App Version" value="1.0.0" colors={colors} />
-            <TouchableOpacity onPress={() => router.push('/privacy')}>
+            <TouchableOpacity
+              onPress={() => router.push('/privacy')}
+              accessibilityLabel="Privacy Policy"
+              accessibilityRole="button"
+              accessibilityHint="View the app's privacy policy"
+            >
               <SettingRow icon="shield-checkmark-outline" label="Privacy Policy" hasArrow colors={colors} />
             </TouchableOpacity>
           </View>
         </View>
 
         {user && (
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+            accessibilityLabel="Sign out"
+            accessibilityRole="button"
+            accessibilityHint="Sign out of your account"
+          >
             <Ionicons name="log-out-outline" size={20} color={colors.error} />
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>

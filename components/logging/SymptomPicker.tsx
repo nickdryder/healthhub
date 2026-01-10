@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
@@ -30,14 +30,16 @@ interface SymptomPickerProps {
   onChange: (symptoms: string[]) => void;
 }
 
-export function SymptomPicker({ selected, onChange }: SymptomPickerProps) {
-  const toggleSymptom = (id: string) => {
-    if (selected.includes(id)) {
-      onChange(selected.filter((s) => s !== id));
-    } else {
-      onChange([...selected, id]);
-    }
-  };
+const SymptomPickerComponent = ({ selected, onChange }: SymptomPickerProps) => {
+  const toggleSymptom = useCallback((id: string) => {
+    return () => {
+      if (selected.includes(id)) {
+        onChange(selected.filter((s) => s !== id));
+      } else {
+        onChange([...selected, id]);
+      }
+    };
+  }, [selected, onChange]);
 
   return (
     <View style={styles.container}>
@@ -49,8 +51,11 @@ export function SymptomPicker({ selected, onChange }: SymptomPickerProps) {
             <TouchableOpacity
               key={symptom.id}
               style={[styles.item, isSelected && styles.itemSelected]}
-              onPress={() => toggleSymptom(symptom.id)}
+              onPress={toggleSymptom(symptom.id)}
               activeOpacity={0.7}
+              accessibilityLabel={`${symptom.label}${isSelected ? ', selected' : ''}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
             >
               <Ionicons
                 name={symptom.icon}
@@ -66,7 +71,9 @@ export function SymptomPicker({ selected, onChange }: SymptomPickerProps) {
       </View>
     </View>
   );
-}
+};
+
+export const SymptomPicker = React.memo(SymptomPickerComponent);
 
 const styles = StyleSheet.create({
   container: {

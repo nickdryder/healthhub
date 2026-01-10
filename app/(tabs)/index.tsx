@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,21 +46,53 @@ export default function DashboardScreen() {
     cycleTracking.isCycleTrackingEnabled().then(setCycleTrackingEnabled);
   }, []);
 
-  const today = new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
-  const getGreeting = () => {
+  // Memoize greeting to avoid recalculation on every render
+  const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
-  };
+  }, []);
 
-  // Build metrics array from real data or show placeholders
-  const displayMetrics = [
+  // Memoize date string to avoid recalculation
+  const today = useMemo(() => {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric'
+    });
+  }, []);
+
+  // Navigate to settings - memoized to prevent recreation
+  const handleProfilePress = useCallback(() => {
+    router.push('/(tabs)/settings');
+  }, []);
+
+  // Navigate to auth - memoized
+  const handleSignInPress = useCallback(() => {
+    router.push('/auth');
+  }, []);
+
+  // Navigate to insights - memoized
+  const handleSeeAllInsights = useCallback(() => {
+    router.push('/(tabs)/insights');
+  }, []);
+
+  // Navigate to metric detail - memoized with metricType parameter
+  const handleMetricPress = useCallback((metricType: string) => {
+    return () => router.push(`/metric/${metricType}` as any);
+  }, []);
+
+  // Navigate to insight detail - memoized with insightId parameter
+  const handleInsightPress = useCallback((insightId: string, insightTitle: string) => {
+    return () => {
+      console.log('[Dashboard] Navigating to insight:', insightId, insightTitle);
+      router.push(`/insight/${insightId}` as any);
+    };
+  }, []);
+
+  // Memoize metrics array - only recalculate when metrics data changes
+  const displayMetrics = useMemo(() => [
     { 
       title: 'Sleep', 
       value: metrics?.sleep?.value?.toString() || '--', 
@@ -100,26 +132,32 @@ export default function DashboardScreen() {
       invertTrendColors: true,
       metricType: 'weight',
     },
-  ];
+  ], [metrics]); // Only recalculate when metrics change
 
-  // Use stored insights only (no fallback to mock data - show empty state instead)
-  const displayInsights = (storedInsights || []).map(i => ({
+  // Memoize insights mapping - only recalculate when storedInsights change
+  const displayInsights = useMemo(() =>
+    (storedInsights || []).map(i => ({
     id: i.id,
     type: i.insight_type,
     title: i.title,
     description: i.description,
     confidence: i.confidence || 0.75,
-  }));
+  })), [storedInsights]); // Only recalculate when insights change
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: colors.text }]}>{getGreeting()}</Text>
+            <Text style={[styles.greeting, { color: colors.text }]}>{greeting}</Text>
             <Text style={[styles.date, { color: colors.textSecondary }]}>{today}</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/(tabs)/settings')}>
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={handleProfilePress}
+            accessibilityLabel="Open settings"
+            accessibilityRole="button"
+          >
             <Ionicons name="person-circle-outline" size={40} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -137,9 +175,9 @@ export default function DashboardScreen() {
             </View>
           ) : (
             <View style={styles.metricsGrid}>
-              {displayMetrics.map((metric, index) => (
-                <MetricCard 
-                  key={index} 
+              {displayMetrics.map((metric) => (
+                <MetricCard
+                  key={metric.metricType} 
                   title={metric.title}
                   value={metric.value}
                   unit={metric.unit}
@@ -148,13 +186,18 @@ export default function DashboardScreen() {
                   trend={metric.trend}
                   invertTrendColors={metric.invertTrendColors}
                   subtitle={metric.subtitle}
-                  onPress={() => router.push(`/metric/${metric.metricType}`)}
+                  onPress={handleMetricPress(metric.metricType)}
                 />
               ))}
             </View>
           )}
           {!user && (
-            <TouchableOpacity style={[styles.signInPrompt, { backgroundColor: `${colors.primary}15` }]} onPress={() => router.push('/auth')}>
+            <TouchableOpacity
+              style={[styles.signInPrompt, { backgroundColor: `${colors.primary}15` }]}
+              onPress={handleSignInPress}
+              accessibilityLabel="Sign in to sync health data"
+              accessibilityRole="button"
+            >
               <Ionicons name="person-circle-outline" size={20} color={colors.primary} />
               <Text style={[styles.signInText, { color: colors.primary }]}>Sign in to sync your health data</Text>
             </TouchableOpacity>
@@ -164,7 +207,11 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>AI Insights</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/insights')}>
+            <TouchableOpacity
+              onPress={handleSeeAllInsights}
+              accessibilityLabel="See all insights"
+              accessibilityRole="button"
+            >
               <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -173,13 +220,10 @@ export default function DashboardScreen() {
           ) : displayInsights.length > 0 ? (
             <View style={styles.insightsList}>
               {displayInsights.map((insight) => (
-                <InsightCard 
-                  key={insight.id} 
-                  {...insight} 
-                  onPress={() => {
-                    console.log('[Dashboard] Navigating to insight:', insight.id, insight.title);
-                    router.push(`/insight/${insight.id}`);
-                  }}
+                <InsightCard
+                  key={insight.id}
+                  {...insight}
+                  onPress={handleInsightPress(insight.id, insight.title)}
                 />
               ))}
             </View>
@@ -224,20 +268,26 @@ export default function DashboardScreen() {
   );
 }
 
-function QuickLogButton({ icon, label, color, cardBg, textColor, logType }: { icon: keyof typeof Ionicons.glyphMap; label: string; color: string; cardBg: string; textColor: string; logType: string }) {
-  const handlePress = () => {
+const QuickLogButton = React.memo(({ icon, label, color, cardBg, textColor, logType }: { icon: keyof typeof Ionicons.glyphMap; label: string; color: string; cardBg: string; textColor: string; logType: string }) => {
+  const handlePress = useCallback(() => {
     router.push({ pathname: '/(tabs)/log', params: { type: logType } });
-  };
+  }, [logType]);
 
   return (
-    <TouchableOpacity style={[styles.quickLogButton, { backgroundColor: cardBg }]} activeOpacity={0.7} onPress={handlePress}>
+    <TouchableOpacity
+      style={[styles.quickLogButton, { backgroundColor: cardBg }]}
+      activeOpacity={0.7}
+      onPress={handlePress}
+      accessibilityLabel={`Log ${label.toLowerCase()}`}
+      accessibilityRole="button"
+    >
       <View style={[styles.quickLogIcon, { backgroundColor: `${color}15` }]}>
         <Ionicons name={icon} size={24} color={color} />
       </View>
       <Text style={[styles.quickLogLabel, { color: textColor }]} numberOfLines={1}>{label}</Text>
     </TouchableOpacity>
   );
-}
+});
 
 interface FoodEntry {
   id: string;
@@ -250,61 +300,72 @@ interface FoodEntry {
   [key: string]: any;
 }
 
-function MacroCard({ foodEntries = [], colors }: { foodEntries?: FoodEntry[]; colors: any }) {
-  const totalCalories = Math.round(foodEntries?.reduce((sum, e) => sum + (Number(e.calories) || 0), 0) || 0);
-  const proteinRaw = foodEntries?.reduce((sum, e) => sum + (Number(e.protein) || 0), 0) || 0;
-  const carbsRaw = foodEntries?.reduce((sum, e) => sum + (Number(e.carbs) || 0), 0) || 0;
-  const fatRaw = foodEntries?.reduce((sum, e) => sum + (Number(e.fat) || 0), 0) || 0;
-  
-  // Format to 1 decimal place
-  const protein = Math.round(proteinRaw * 10) / 10;
-  const carbs = Math.round(carbsRaw * 10) / 10;
-  const fat = Math.round(fatRaw * 10) / 10;
-  const total = protein + carbs + fat;
+const MacroCard = React.memo(({ foodEntries = [], colors }: { foodEntries?: FoodEntry[]; colors: any }) => {
+  // Memoize macro calculations - only recalculate when foodEntries change
+  const macros = useMemo(() => {
+    const totalCalories = Math.round(foodEntries?.reduce((sum, e) => sum + (Number(e.calories) || 0), 0) || 0);
+    const proteinRaw = foodEntries?.reduce((sum, e) => sum + (Number(e.protein) || 0), 0) || 0;
+    const carbsRaw = foodEntries?.reduce((sum, e) => sum + (Number(e.carbs) || 0), 0) || 0;
+    const fatRaw = foodEntries?.reduce((sum, e) => sum + (Number(e.fat) || 0), 0) || 0;
 
-  const proteinPct = total > 0 ? (protein / total) * 100 : 0;
-  const carbsPct = total > 0 ? (carbs / total) * 100 : 0;
-  const fatPct = total > 0 ? (fat / total) * 100 : 0;
+    // Format to 1 decimal place
+    const protein = Math.round(proteinRaw * 10) / 10;
+    const carbs = Math.round(carbsRaw * 10) / 10;
+    const fat = Math.round(fatRaw * 10) / 10;
+    const total = protein + carbs + fat;
+
+    const proteinPct = total > 0 ? (protein / total) * 100 : 0;
+    const carbsPct = total > 0 ? (carbs / total) * 100 : 0;
+    const fatPct = total > 0 ? (fat / total) * 100 : 0;
+
+    return { totalCalories, protein, carbs, fat, proteinPct, carbsPct, fatPct };
+  }, [foodEntries]);
+
+  const handlePress = useCallback(() => {
+    router.push('/food-log' as any);
+  }, []);
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.macroCard, { backgroundColor: colors.card }]}
-      onPress={() => router.push('/food-log')}
+      onPress={handlePress}
       activeOpacity={0.7}
+      accessibilityLabel={`View food log. Today's intake: ${macros.totalCalories} calories`}
+      accessibilityRole="button"
     >
       <View style={styles.macroHeader}>
         <Text style={[styles.macroTitle, { color: colors.text }]}>Today's Intake</Text>
         <View style={styles.macroHeaderRight}>
-          <Text style={[styles.macroCalories, { color: colors.textSecondary }]}>{totalCalories} kcal</Text>
+          <Text style={[styles.macroCalories, { color: colors.textSecondary }]}>{macros.totalCalories} kcal</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </View>
       </View>
 
       <View style={styles.macroBar}>
-        <View style={[styles.macroSegment, { flex: proteinPct, backgroundColor: '#FF6B6B' }]} />
-        <View style={[styles.macroSegment, { flex: carbsPct, backgroundColor: '#4ECDC4' }]} />
-        <View style={[styles.macroSegment, { flex: fatPct, backgroundColor: '#FFE66D' }]} />
+        <View style={[styles.macroSegment, { flex: macros.proteinPct, backgroundColor: '#FF6B6B' }]} />
+        <View style={[styles.macroSegment, { flex: macros.carbsPct, backgroundColor: '#4ECDC4' }]} />
+        <View style={[styles.macroSegment, { flex: macros.fatPct, backgroundColor: '#FFE66D' }]} />
       </View>
 
       <View style={styles.macroLegend}>
         <View style={styles.macroItem}>
           <View style={[styles.macroDot, { backgroundColor: '#FF6B6B' }]} />
           <View>
-            <Text style={[styles.macroValue, { color: colors.text }]}>{protein}g</Text>
+            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.protein}g</Text>
             <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>Protein</Text>
           </View>
         </View>
         <View style={styles.macroItem}>
           <View style={[styles.macroDot, { backgroundColor: '#4ECDC4' }]} />
           <View>
-            <Text style={[styles.macroValue, { color: colors.text }]}>{carbs}g</Text>
+            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.carbs}g</Text>
             <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>Carbs</Text>
           </View>
         </View>
-        <View style={styles.macroItem}>
+        <View style={[styles.macroItem]}>
           <View style={[styles.macroDot, { backgroundColor: '#FFE66D' }]} />
           <View>
-            <Text style={[styles.macroValue, { color: colors.text }]}>{fat}g</Text>
+            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.fat}g</Text>
             <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>Fat</Text>
           </View>
         </View>
@@ -312,7 +373,7 @@ function MacroCard({ foodEntries = [], colors }: { foodEntries?: FoodEntry[]; co
       <Text style={[styles.tapHint, { color: colors.textSecondary }]}>Tap to view food items & add tags</Text>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -325,9 +386,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 20,
-  },
-  streakSection: {
-    paddingHorizontal: 20,
   },
   greeting: {
     fontSize: 28,

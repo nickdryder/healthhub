@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,9 +28,18 @@ export default function TrendsScreen() {
   const { colors } = useTheme();
   const [timeRange, setTimeRange] = useState<TimeRange>('14d');
 
-  const daysBack = parseInt(timeRange);
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - daysBack);
+  // Memoize date calculations
+  const startDate = useMemo(() => {
+    const daysBack = parseInt(timeRange);
+    const date = new Date();
+    date.setDate(date.getDate() - daysBack);
+    return date;
+  }, [timeRange]);
+
+  // Memoize time range button handler
+  const handleTimeRangePress = useCallback((rangeId: TimeRange) => {
+    return () => setTimeRange(rangeId);
+  }, []);
 
   const { data: trendData, isLoading } = useQuery({
     queryKey: ['trends', user?.id, timeRange],
@@ -133,8 +142,11 @@ export default function TrendsScreen() {
                 { backgroundColor: colors.card },
                 timeRange === range.id && { backgroundColor: colors.primary },
               ]}
-              onPress={() => setTimeRange(range.id)}
+              onPress={handleTimeRangePress(range.id)}
               activeOpacity={0.7}
+              accessibilityLabel={`View trends for ${range.label}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: timeRange === range.id }}
             >
               <Text
                 style={[
