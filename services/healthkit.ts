@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { supabase } from '@/integrations/supabase/client';
+import { HealthMetricInsert, IntegrationInsert } from '@/types/database-extended';
 
 // Check if we're on iOS (HealthKit only available on iOS)
 export const isHealthKitAvailable = Platform.OS === 'ios';
@@ -256,8 +257,8 @@ class HealthKitService {
         this.getWeight(yesterday, now),
       ]);
 
-      const metrics = [];
-      const source = 'apple_health'; // Always real now
+      const metrics: HealthMetricInsert[] = [];
+      const source = 'apple_health';
 
       // Steps
       if (steps > 0) {
@@ -347,17 +348,19 @@ class HealthKitService {
 
       // Insert into Supabase
       if (metrics.length > 0) {
-        const { error } = await supabase.from('health_metrics').insert(metrics as any);
+        const { error } = await supabase.from('health_metrics').insert(metrics);
         if (error) throw error;
+
         // Update integration last sync time
+        const integration: IntegrationInsert = {
+          user_id: userId,
+          provider: 'apple_health',
+          is_connected: true,
+          last_sync_at: now.toISOString(),
+        };
         await supabase
           .from('integrations')
-          .upsert({
-            user_id: userId,
-            provider: 'apple_health',
-            is_connected: true,
-            last_sync_at: now.toISOString(),
-          } as any, { onConflict: 'user_id,provider' });
+          .upsert(integration, { onConflict: 'user_id,provider' });
       }
 
       console.log(`Synced ${metrics.length} health metrics from Apple Health`);

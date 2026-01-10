@@ -20,6 +20,8 @@ import { colors as staticColors } from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { cycleTracking } from '@/services/cycle-tracking';
+import { parseIntSafe, parseFloatSafe, validateExercise, validateSupplement, validateCaffeineAmount } from '@/utils/validation';
+import { ManualLogInsert, HealthMetricInsert } from '@/types/database-extended';
 
 type LogType = 'symptom' | 'bristol' | 'caffeine' | 'exercise' | 'supplement' | 'weight' | 'medication' | 'cycle' | 'custom';
 
@@ -102,7 +104,7 @@ export default function LogScreen() {
     const now = new Date().toISOString();
 
     try {
-      const logs: any[] = [];
+      const logs: ManualLogInsert[] = [];
 
       if (activeType === 'symptom' && selectedSymptoms.length > 0) {
         for (const symptom of selectedSymptoms) {
@@ -138,16 +140,26 @@ export default function LogScreen() {
           },
         });
       } else if (activeType === 'caffeine' && caffeineAmount) {
+        const validation = validateCaffeineAmount(caffeineAmount);
+        if (!validation.valid) {
+          Alert.alert('Invalid Input', validation.error || 'Invalid caffeine amount');
+          return;
+        }
         logs.push({
           user_id: user.id,
           log_type: 'caffeine',
           category: 'food',
-          value: caffeineAmount,
+          value: String(validation.value),
           severity: null,
           notes: notes || null,
           logged_at: now,
         });
       } else if (activeType === 'exercise' && exercise.name) {
+        const validation = validateExercise(exercise);
+        if (!validation.valid) {
+          Alert.alert('Invalid Input', validation.errors.join('\n'));
+          return;
+        }
         logs.push({
           user_id: user.id,
           log_type: 'exercise',
@@ -157,13 +169,18 @@ export default function LogScreen() {
           notes: notes || null,
           logged_at: now,
           metadata: {
-            sets: exercise.sets ? (parseInt(exercise.sets) || null) : null,
-            reps: exercise.reps ? (parseInt(exercise.reps) || null) : null,
-            weight: exercise.weight ? (parseFloat(exercise.weight) || null) : null,
+            sets: parseIntSafe(exercise.sets),
+            reps: parseIntSafe(exercise.reps),
+            weight: parseFloatSafe(exercise.weight),
             weight_unit: useMetric ? 'kg' : 'lbs',
           },
         });
       } else if (activeType === 'supplement' && supplement.name) {
+        const validation = validateSupplement(supplement);
+        if (!validation.valid) {
+          Alert.alert('Invalid Input', validation.errors.join('\n'));
+          return;
+        }
         logs.push({
           user_id: user.id,
           log_type: 'supplement',
@@ -178,22 +195,23 @@ export default function LogScreen() {
         });
       } else if (activeType === 'weight' && weight) {
         // Insert into health_metrics for weight
-        const weightValue = parseFloat(weight);
-        if (isNaN(weightValue) || weightValue <= 0) {
+        const weightValue = parseFloatSafe(weight);
+        if (weightValue === null || weightValue <= 0) {
           Alert.alert('Invalid Weight', 'Please enter a valid weight.');
           setIsSubmitting(false);
           return;
         }
 
-        const { error: weightError } = await supabase.from('health_metrics').insert({
+        const weightMetric: HealthMetricInsert = {
           user_id: user.id,
           metric_type: 'weight',
           value: weightValue,
           unit: 'kg',
           source: 'manual',
           recorded_at: now,
-        } as any);
+        };
 
+        const { error: weightError } = await supabase.from('health_metrics').insert(weightMetric);
         if (weightError) throw weightError;
 
         queryClient.invalidateQueries({ queryKey: ['health-metrics'] });
@@ -214,7 +232,7 @@ export default function LogScreen() {
         return;
       }
 
-      const { error } = await supabase.from('manual_logs').insert(logs as any);
+      const { error } = await supabase.from('manual_logs').insert(logs);
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['recent-logs'] });
