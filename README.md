@@ -1,82 +1,117 @@
-# Project Quickstart
+# HealthHub
 
-This Expo project was vibe coded with [SteerCode](https://steercode.com).
+A comprehensive health tracking and insights app built with Expo and React Native.
 
-Follow this guide to quickly edit, run, and publish your Expo app.
+## Features
 
-## Project Access
+- 📊 Health data integration (Apple Health, Fitbit, Google Calendar)
+- 🧠 AI-powered health insights and correlations
+- 📈 Trend visualization and tracking
+- 🔒 Secure cycle tracking with AES-256 encryption
+- 📝 Manual logging for symptoms, exercise, medications, and more
+- 🌙 Dark mode support
+- ♿ Accessibility optimized (WCAG compliant)
 
-Visit your project directly here:
+## Tech Stack
 
-[\<YOUR_PROJECT_URL>](YOUR_PROJECT_URL)
+- **Expo SDK 53** – React Native app development
+- **React Native** – Cross-platform mobile apps
+- **TypeScript** – Type-safe JavaScript
+- **expo-router** – File-based navigation
+- **Supabase** – Backend and database
+- **React Query** – Data fetching and caching
+- **HealthKit** – Apple Health integration
+- **Expo Secure Store** – Hardware-backed encryption
 
-## How to Edit Your Project
+## Getting Started
 
-You have multiple ways to manage your Expo project:
+### Prerequisites
 
-### Using SteerCode
+- Node.js 18+ ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- npm or bun
+- Expo Go app (for testing on device)
 
-* Access your [project at SteerCode](YOUR_PROJECT_URL).
-* Edit using simple prompts.
-* All changes are auto-saved to your repository.
+### Installation
 
-### Using a Local IDE
-
-To work locally, follow these steps:
-
-1. **Clone Your Repository**
-
+1. **Clone the repository**
    ```bash
    git clone <YOUR_GIT_URL>
+   cd healthhub
    ```
 
-2. **Navigate to Your Project Directory**
-
-   ```bash
-   cd <YOUR_PROJECT_NAME>
-   ```
-
-3. **Install Dependencies**
-
-   Ensure Node.js and npm are installed ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)):
-
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-4. **Run the Expo Development Server**
+3. **Set up environment variables**
 
-   Launch your Expo project:
+   Create a `.env` file in the root directory:
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
+4. **Run the development server**
    ```bash
    npm start
    ```
 
-   Scan the QR code using Expo Go or run in an emulator.
+   Scan the QR code with Expo Go or run in an emulator.
 
-### Editing Directly on GitHub
+## Publishing to TestFlight
 
-For quick edits:
+This app uses EAS Build for cloud-based iOS builds:
 
-* Open the file on GitHub.
-* Click the pencil icon to edit.
-* Make changes and commit directly.
+```bash
+# Install EAS CLI
+npm install -g eas-cli
 
-## Tech Stack
+# Login to Expo
+eas login
 
-This Expo project uses:
+# Configure EAS
+eas build:configure
 
-* **Expo SDK 53** – easy React Native app development
-* **React Native** – build native apps with JavaScript
-* **TypeScript** – strongly-typed JavaScript
-* **expo-router** – simple navigation
-* **Expo Vector Icons** – built-in icon sets
+# Build for iOS
+npx eas-cli build --platform ios --profile production
 
-## Publishing Your Project
+# Submit to TestFlight
+npx eas-cli submit --platform ios
+```
 
-Publish your project easily:
+## Project Structure
 
-* Open [SteerCode](YOUR_PROJECT_URL).
-* Click the **Publish** button.
+```
+healthhub/
+├── app/                    # Expo Router pages
+│   ├── (tabs)/            # Tab navigation screens
+│   └── ...                # Other screens
+├── components/            # Reusable React components
+├── services/              # Business logic and API integrations
+├── hooks/                 # Custom React hooks
+├── providers/             # React context providers
+├── constants/             # App constants and configuration
+├── utils/                 # Utility functions
+└── types/                 # TypeScript type definitions
+```
 
-Happy coding!
+## Security Features
+
+- AES-256-CBC encryption for sensitive cycle data
+- Hardware-backed key storage using Expo Secure Store
+- XSS protection with input sanitization
+- Supabase Row Level Security (RLS) for database
+- No hardcoded credentials (environment variables only)
+
+## Contributing
+
+This is a personal health tracking app. If you'd like to contribute or report issues, please open an issue or pull request.
+
+## License
+
+Private project - All rights reserved
+
+---
+
+Built with ❤️ by Riley Hansen
