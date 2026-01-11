@@ -1,6 +1,6 @@
 {
-  "name": "steercode-project",
-  "slug": "steercode-project",
+  "name": "HealthHub",
+  "slug": "healthhub",
   "version": "1.0.0",
   "orientation": "portrait",
   "icon": "./assets/images/icon.png",
@@ -8,6 +8,8 @@
   "userInterfaceStyle": "automatic",
   "newArchEnabled": true,
   "ios": {
+    "bundleIdentifier": "com.yourname.healthhub",
+    "buildNumber": "1",
     "supportsTablet": true,
     "infoPlist": {
       "NSHealthShareUsageDescription": "This app reads your health data to provide personalized insights and track your wellness.",
