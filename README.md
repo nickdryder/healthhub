@@ -114,4 +114,4 @@ Private project - All rights reserved
 
 ---
 
-Built with ❤️ by Riley Hansen
+Built with ❤️ by Nick Ryder
