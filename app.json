@@ -16,7 +16,7 @@
         "NSHealthUpdateUsageDescription": "This app saves workout and health data to Apple Health.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "5"
+      "buildNumber": "7"
     },
     "android": {
       "adaptiveIcon": {
