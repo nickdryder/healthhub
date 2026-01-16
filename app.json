@@ -13,8 +13,10 @@
       "bundleIdentifier": "com.nickdryder.healthhub",
       "infoPlist": {
         "NSHealthShareUsageDescription": "This app reads your health data to provide personalized insights and track your wellness.",
-        "NSHealthUpdateUsageDescription": "This app saves workout and health data to Apple Health."
-      }
+        "NSHealthUpdateUsageDescription": "This app saves workout and health data to Apple Health.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "5"
     },
     "android": {
       "adaptiveIcon": {
@@ -54,8 +56,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
-      }
-    }
+        "projectId": "1d21cdc7-6fc2-4ad2-aea7-6a746b1ca7c7"
+      },
+      "router": {}
+    },
+    "owner": "nickdryder"
   }
 }
