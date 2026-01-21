@@ -57,7 +57,7 @@ function SettingRow({ icon, label, value, hasToggle, hasArrow, isEnabled, onTogg
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { isDark, colors, toggleDarkMode } = useTheme();
-  const { loading, connectAppleHealth, connectFitbit, connectGoogleCalendar, getIntegrationStatus, refreshInsights, syncAllIntegrations } = useHealthIntegrations();
+  const { loading, connectAppleHealth, connectFitbit, connectGoogleCalendar, getIntegrationStatus, refreshInsights, syncAllIntegrations, disconnectIntegration } = useHealthIntegrations();
   // Initialize with disconnected state, will update after mount
   const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, boolean>>({
     apple_health: false,
@@ -166,6 +166,34 @@ export default function SettingsScreen() {
   };
 
   const handleConnectIntegration = async (id: IntegrationProvider, name: string) => {
+    const isConnected = integrationStatuses[id];
+
+    // If already connected, offer to disconnect
+    if (isConnected) {
+      Alert.alert(
+        `Disconnect ${name}?`,
+        `${name} is currently connected. Do you want to disconnect it?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Disconnect',
+            style: 'destructive',
+            onPress: async () => {
+              const success = await disconnectIntegration(id);
+              if (success) {
+                await refreshIntegrationStatuses();
+                Alert.alert('Disconnected', `${name} has been disconnected.`);
+              } else {
+                Alert.alert('Error', `Failed to disconnect ${name}.`);
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    // Not connected - try to connect
     let success = false;
     switch (id) {
       case 'apple_health':
