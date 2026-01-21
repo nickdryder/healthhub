@@ -1,17 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/providers/ThemeProvider';
 import { searchCities, GeocodingResult, saveUserLocation, getUserLocation } from '@/services/weather';
 import { useAuth } from '@/providers/AuthProvider';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors as staticColors } from '@/constants/colors';
+import { useRouter } from 'expo-router';
 
 export function LocationPicker() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+  const router = useRouter();
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeocodingResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -28,7 +30,7 @@ export function LocationPicker() {
   const saveMutation = useMutation({
     mutationFn: async (location: GeocodingResult) => {
       if (!user) throw new Error('Not authenticated');
-      const displayName = location.admin1 
+      const displayName = location.admin1
         ? `${location.name}, ${location.admin1}, ${location.country}`
         : `${location.name}, ${location.country}`;
       return saveUserLocation(user.id, displayName, location.latitude, location.longitude);
@@ -39,6 +41,20 @@ export function LocationPicker() {
       setIsEditing(false);
       setQuery('');
       setResults([]);
+    },
+    onError: (error) => {
+      if (error.message === 'Not authenticated') {
+        Alert.alert(
+          'Sign In Required',
+          'Please sign in to save your weather location.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign In', onPress: () => router.push('/auth') },
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to save location. Please try again.');
+      }
     },
   });
 

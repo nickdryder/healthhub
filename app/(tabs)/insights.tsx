@@ -278,9 +278,9 @@ export default function InsightsScreen() {
         ) : (
           <View style={styles.insightsList}>
             {filteredInsights.map((insight) => (
-              <InsightCard 
-                key={insight.id} 
-                {...insight} 
+              <InsightCard
+                key={insight.id}
+                {...insight}
                 onPress={() => {
                   cacheInsight({
                     id: insight.id,
@@ -293,9 +293,7 @@ export default function InsightsScreen() {
                   });
                   router.push(`/insight/${insight.id}`);
                 }}
-              >
-                <Text style={styles.description}>{formatInsightDescription(insight.description)}</Text>
-              </InsightCard>
+              />
             ))}
           </View>
         )}
@@ -424,10 +422,5 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-  },
-  description: {
-    fontSize: 14,
-    color: staticColors.grayDark,
-    marginTop: 4,
   },
 });

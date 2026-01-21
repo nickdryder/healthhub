@@ -50,7 +50,7 @@ export function CycleCard() {
       .filter(e => e.phase === 'menstruation')
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    if (menstruationEntries.length === 0) return null;
+    if (menstruationEntries.length === 0) return 0;
 
     const lastMenstruation = new Date(menstruationEntries[0].date);
     const today = new Date();

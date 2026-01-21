@@ -9,12 +9,74 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      food_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          food_name: string;
+          brand: string | null;
+          meal_type: string;
+          calories: number;
+          carbs: number;
+          fat: number;
+          protein: number;
+          fiber: number | null;
+          sodium: number | null;
+          contains_dairy: boolean;
+          contains_gluten: boolean;
+          contains_caffeine: boolean;
+          logged_at: string;
+          source: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          food_name: string;
+          brand?: string | null;
+          meal_type: string;
+          calories: number;
+          carbs: number;
+          fat: number;
+          protein: number;
+          fiber?: number | null;
+          sodium?: number | null;
+          contains_dairy?: boolean;
+          contains_gluten?: boolean;
+          contains_caffeine?: boolean;
+          logged_at: string;
+          source: string;
+          created_at?: string;
+        };
+        Update: {
+          food_name?: string;
+          brand?: string | null;
+          meal_type?: string;
+          calories?: number;
+          carbs?: number;
+          fat?: number;
+          protein?: number;
+          fiber?: number | null;
+          sodium?: number | null;
+          contains_dairy?: boolean;
+          contains_gluten?: boolean;
+          contains_caffeine?: boolean;
+          logged_at?: string;
+          source?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
           email: string | null;
           full_name: string | null;
           avatar_url: string | null;
+          height_cm: number | null;
+          sex: string | null;
+          step_goal: number | null;
+          sleep_goal: number | null;
+          weight_goal: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -23,6 +85,11 @@ export interface Database {
           email?: string | null;
           full_name?: string | null;
           avatar_url?: string | null;
+          height_cm?: number | null;
+          sex?: string | null;
+          step_goal?: number | null;
+          sleep_goal?: number | null;
+          weight_goal?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -31,8 +98,14 @@ export interface Database {
           email?: string | null;
           full_name?: string | null;
           avatar_url?: string | null;
+          height_cm?: number | null;
+          sex?: string | null;
+          step_goal?: number | null;
+          sleep_goal?: number | null;
+          weight_goal?: number | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       health_metrics: {
         Row: {
@@ -65,6 +138,7 @@ export interface Database {
           recorded_at?: string;
           metadata?: Json;
         };
+        Relationships: [];
       };
       manual_logs: {
         Row: {
@@ -97,6 +171,7 @@ export interface Database {
           notes?: string | null;
           logged_at?: string;
         };
+        Relationships: [];
       };
       integrations: {
         Row: {
@@ -129,6 +204,7 @@ export interface Database {
           last_sync_at?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       ai_insights: {
         Row: {
@@ -138,7 +214,7 @@ export interface Database {
           title: string;
           description: string;
           confidence: number | null;
-          related_metrics: Json;
+          related_metrics: string[] | null;
           metadata: Json;
           created_at: string;
         };
@@ -149,7 +225,7 @@ export interface Database {
           title: string;
           description: string;
           confidence?: number | null;
-          related_metrics?: Json;
+          related_metrics?: string[] | null;
           metadata?: Json;
         };
         Update: {
@@ -157,9 +233,34 @@ export interface Database {
           title?: string;
           description?: string;
           confidence?: number | null;
-          related_metrics?: Json;
+          related_metrics?: string[] | null;
           metadata?: Json;
         };
+        Relationships: [];
+      };
+      medication_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          took_medication: boolean;
+          notes: string | null;
+          logged_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          took_medication: boolean;
+          notes?: string | null;
+          logged_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          took_medication?: boolean;
+          notes?: string | null;
+          logged_at?: string;
+        };
+        Relationships: [];
       };
       calendar_events: {
         Row: {
@@ -201,7 +302,20 @@ export interface Database {
           metadata?: Json;
           updated_at?: string;
         };
+        Relationships: [];
       };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }
@@ -212,3 +326,4 @@ export type ManualLog = Database['public']['Tables']['manual_logs']['Row'];
 export type Integration = Database['public']['Tables']['integrations']['Row'];
 export type AIInsight = Database['public']['Tables']['ai_insights']['Row'];
 export type CalendarEvent = Database['public']['Tables']['calendar_events']['Row'];
+export type FoodEntry = Database['public']['Tables']['food_entries']['Row'];

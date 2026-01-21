@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, DimensionValue } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,15 +11,15 @@ import Animated, {
 import { useTheme } from '@/providers/ThemeProvider';
 
 interface SkeletonProps {
-  width?: number | string;
+  width?: DimensionValue;
   height?: number;
   borderRadius?: number;
   marginBottom?: number;
 }
 
-export function Skeleton({ 
-  width = '100%', 
-  height = 16, 
+export function Skeleton({
+  width = '100%',
+  height = 16,
   borderRadius = 8,
   marginBottom = 8,
 }: SkeletonProps) {
@@ -45,7 +45,7 @@ export function Skeleton({
       style={[
         styles.skeleton,
         {
-          width,
+          width: width as DimensionValue,
           height,
           borderRadius,
           marginBottom,

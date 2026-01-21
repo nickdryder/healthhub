@@ -326,9 +326,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 20,
   },
-  streakSection: {
-    paddingHorizontal: 20,
-  },
   greeting: {
     fontSize: 28,
     fontWeight: '700',

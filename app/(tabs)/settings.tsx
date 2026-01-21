@@ -242,6 +242,22 @@ export default function SettingsScreen() {
           <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
         </View>
 
+        {!user && (
+          <TouchableOpacity
+            style={[styles.signInSection, { backgroundColor: colors.card }]}
+            onPress={() => router.push('/auth')}
+          >
+            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+              <Ionicons name="person-outline" size={32} color="#FFFFFF" />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={[styles.profileName, { color: colors.text }]}>Sign In</Text>
+              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>Sync data across devices</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+
         {user && (
           <View style={[styles.profileSection, { backgroundColor: colors.card }]}>
             <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
@@ -466,6 +482,14 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
   title: { fontSize: 28, fontWeight: '700' },
   profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  signInSection: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 20,

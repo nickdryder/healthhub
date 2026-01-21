@@ -103,27 +103,8 @@ export async function generateHealthInsights(
   timeframe: 'daily' | 'weekly' | 'monthly' = 'daily'
 ): Promise<GeneratedInsight[]> {
   try {
-    // ... existing metric gathering code ...
-
-    // Get current cycle phase
-    const cycleTracking = new CycleTracker();
-    const currentEntry = await cycleTracking.getCurrentEntry();
-    const metrics = {
-      // ... existing metrics ...
-      cyclePhase: currentEntry?.phase,
-    };
-
-    // ... existing correlation gathering ...
-    const cycleAnalysis = analyzeCycleCorrelations(metrics, metrics.cyclePhase);
-
-    // Merge cycle insights with other insights
-    const allInsights = [
-      // ... other insights ...
-      ...cycleAnalysis,
-    ];
-
-    // ... rest of function ...
-    return allInsights;
+    // Use the aiInsightsService to generate insights
+    return await aiInsightsService.generateInsights(userId);
   } catch (error) {
     console.error('Error generating insights:', error);
     throw error;

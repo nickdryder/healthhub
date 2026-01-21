@@ -116,7 +116,7 @@ export default function ProfileScreen() {
     },
   });
 
-  const bmi = calculateBMI(weightData, parseFloat(heightCm) || null);
+  const bmi = calculateBMI(weightData ?? null, parseFloat(heightCm) || null);
   const goalBmi = calculateBMI(parseFloat(weightGoal) || null, parseFloat(heightCm) || null);
 
   const sexOptions: { value: BiologicalSex; label: string }[] = [

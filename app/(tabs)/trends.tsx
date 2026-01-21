@@ -46,14 +46,14 @@ export default function TrendsScreen() {
           .order('recorded_at', { ascending: true }),
         supabase
           .from('manual_logs')
-          .select('log_type, value, severity, logged_at, metadata')
+          .select('log_type, value, severity, logged_at')
           .eq('user_id', user.id)
           .gte('logged_at', startDate.toISOString())
           .order('logged_at', { ascending: true }),
       ]);
 
       const metrics = (metricsRes.data || []) as { metric_type: string; value: number; recorded_at: string }[];
-      const logs = (logsRes.data || []) as { log_type: string; value: string; severity: number | null; logged_at: string; metadata?: any }[];
+      const logs = (logsRes.data || []) as { log_type: string; value: string; severity: number | null; logged_at: string }[];
 
       // Group metrics by type and aggregate by day
       const groupByDay = (items: { date: string; value: number }[]): DataPoint[] => {

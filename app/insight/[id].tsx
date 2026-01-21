@@ -116,7 +116,7 @@ export default function InsightDetailScreen() {
     );
   }
 
-  const typeConfig: Record<string, { label: string; icon: string; gradient: string[] }> = {
+  const typeConfig: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; gradient: [string, string] }> = {
     correlation: { label: 'Correlation', icon: 'link', gradient: ['#3B82F6', '#1E40AF'] },
     prediction: { label: 'Prediction', icon: 'trending-up', gradient: ['#10B981', '#047857'] },
     recommendation: { label: 'Recommendation', icon: 'bulb', gradient: ['#F59E0B', '#D97706'] },
