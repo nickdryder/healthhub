@@ -14,9 +14,10 @@
       "infoPlist": {
         "NSHealthShareUsageDescription": "This app reads your health data to provide personalized insights and track your wellness.",
         "NSHealthUpdateUsageDescription": "This app saves workout and health data to Apple Health.",
+        "NSCameraUsageDescription": "This app uses the camera to scan food barcodes for quick nutrition logging.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "9"
+      "buildNumber": "10"
     },
     "android": {
       "adaptiveIcon": {
