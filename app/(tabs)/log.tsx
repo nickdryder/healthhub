@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BristolScalePicker } from '@/components/logging/BristolScalePicker';
 import { SymptomPicker } from '@/components/logging/SymptomPicker';
@@ -94,7 +94,14 @@ export default function LogScreen() {
 
   const handleSubmit = async () => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to log health data.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to log health data.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return;
     }
 

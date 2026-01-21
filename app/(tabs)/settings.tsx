@@ -151,7 +151,14 @@ export default function SettingsScreen() {
 
   const handleSendTestSummary = async () => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to test notifications.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to test notifications.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return;
     }
     await notificationService.sendWeeklySummaryNow(user.id);
@@ -194,7 +201,14 @@ export default function SettingsScreen() {
 
   const handleExportData = async () => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to export data.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to export data.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return;
     }
     setExporting(true);

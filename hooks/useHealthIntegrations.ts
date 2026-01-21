@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Platform, Alert } from 'react-native';
+import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers/AuthProvider';
 import { healthKitService, isHealthKitAvailable } from '@/services/healthkit';
@@ -51,7 +52,14 @@ export function useHealthIntegrations() {
 
   const connectAppleHealth = useCallback(async (): Promise<boolean> => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to connect Apple Health.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to connect Apple Health.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return false;
     }
 
@@ -98,7 +106,14 @@ export function useHealthIntegrations() {
 
   const connectFitbit = useCallback(async (): Promise<boolean> => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to connect Fitbit.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to connect Fitbit.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return false;
     }
 
@@ -140,7 +155,14 @@ export function useHealthIntegrations() {
 
   const connectGoogleCalendar = useCallback(async (): Promise<boolean> => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to connect Google Calendar.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to connect Google Calendar.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return false;
     }
 
@@ -229,7 +251,14 @@ export function useHealthIntegrations() {
 
   const refreshInsights = useCallback(async (): Promise<boolean> => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to generate insights.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to generate insights.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return false;
     }
 
@@ -318,7 +347,14 @@ export function useHealthIntegrations() {
   // User-triggered sync (shows alerts)
   const syncAllIntegrations = useCallback(async (): Promise<boolean> => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to sync data.');
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to sync data.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/auth') },
+        ]
+      );
       return false;
     }
 

@@ -17,7 +17,7 @@
         "NSCameraUsageDescription": "This app uses the camera to scan food barcodes for quick nutrition logging.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "12"
+      "buildNumber": "13"
     },
     "android": {
       "adaptiveIcon": {
