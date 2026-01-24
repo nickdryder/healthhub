@@ -7,6 +7,28 @@ export const isHealthKitAvailable = Platform.OS === 'ios';
 // Dynamic import type for HealthKit
 let HealthKit: typeof import('@kingstinct/react-native-healthkit') | null = null;
 
+// Fallback identifiers (HealthKit accepts string identifiers directly)
+const HK_QUANTITY_IDS = {
+  stepCount: 'HKQuantityTypeIdentifierStepCount',
+  heartRate: 'HKQuantityTypeIdentifierHeartRate',
+  restingHeartRate: 'HKQuantityTypeIdentifierRestingHeartRate',
+  heartRateVariabilitySDNN: 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
+  oxygenSaturation: 'HKQuantityTypeIdentifierOxygenSaturation',
+  activeEnergyBurned: 'HKQuantityTypeIdentifierActiveEnergyBurned',
+  bodyMass: 'HKQuantityTypeIdentifierBodyMass',
+};
+const HK_CATEGORY_IDS = {
+  sleepAnalysis: 'HKCategoryTypeIdentifierSleepAnalysis',
+};
+
+// Helper to get quantity type identifier
+function getQuantityId(key: keyof typeof HK_QUANTITY_IDS): string {
+  return HealthKit?.HKQuantityTypeIdentifier?.[key] ?? HK_QUANTITY_IDS[key];
+}
+function getCategoryId(key: keyof typeof HK_CATEGORY_IDS): string {
+  return HealthKit?.HKCategoryTypeIdentifier?.[key] ?? HK_CATEGORY_IDS[key];
+}
+
 /**
  * Apple Health Integration Service
  * 
@@ -62,14 +84,14 @@ class HealthKitService {
     try {
       const permissions = {
         read: [
-          HealthKit.HKQuantityTypeIdentifier.stepCount,
-          HealthKit.HKQuantityTypeIdentifier.heartRate,
-          HealthKit.HKQuantityTypeIdentifier.restingHeartRate,
-          HealthKit.HKQuantityTypeIdentifier.heartRateVariabilitySDNN,
-          HealthKit.HKQuantityTypeIdentifier.oxygenSaturation,
-          HealthKit.HKQuantityTypeIdentifier.activeEnergyBurned,
-          HealthKit.HKQuantityTypeIdentifier.bodyMass,
-          HealthKit.HKCategoryTypeIdentifier.sleepAnalysis,
+          getQuantityId('stepCount'),
+          getQuantityId('heartRate'),
+          getQuantityId('restingHeartRate'),
+          getQuantityId('heartRateVariabilitySDNN'),
+          getQuantityId('oxygenSaturation'),
+          getQuantityId('activeEnergyBurned'),
+          getQuantityId('bodyMass'),
+          getCategoryId('sleepAnalysis'),
         ],
         write: [] as string[],
       };
@@ -96,7 +118,7 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryQuantitySamples(
-        HealthKit.HKQuantityTypeIdentifier.stepCount,
+        getQuantityId('stepCount'),
         { from: startDate, to: endDate }
       );
       return samples.reduce((sum, s) => sum + s.quantity, 0);
@@ -113,7 +135,7 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryQuantitySamples(
-        HealthKit.HKQuantityTypeIdentifier.heartRate,
+        getQuantityId('heartRate'),
         { from: startDate, to: endDate }
       );
       return samples.map(s => ({
@@ -133,7 +155,7 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryQuantitySamples(
-        HealthKit.HKQuantityTypeIdentifier.restingHeartRate,
+        getQuantityId('restingHeartRate'),
         { from: startDate, to: endDate }
       );
       if (samples.length === 0) return null;
@@ -151,7 +173,7 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryQuantitySamples(
-        HealthKit.HKQuantityTypeIdentifier.heartRateVariabilitySDNN,
+        getQuantityId('heartRateVariabilitySDNN'),
         { from: startDate, to: endDate }
       );
       if (samples.length === 0) return null;
@@ -169,18 +191,23 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryCategorySamples(
-        HealthKit.HKCategoryTypeIdentifier.sleepAnalysis,
+        getCategoryId('sleepAnalysis'),
         { from: startDate, to: endDate }
       );
 
+      if (!samples || samples.length === 0) {
+        return { totalHours: 0, quality: 0 };
+      }
+
       // Calculate total sleep from samples (asleep categories)
+      // Use string values as fallback for sleep analysis values
       let totalMs = 0;
-      const asleepValues = [
+      const asleepValues = HealthKit.HKCategoryValueSleepAnalysis ? [
         HealthKit.HKCategoryValueSleepAnalysis.asleepCore,
         HealthKit.HKCategoryValueSleepAnalysis.asleepDeep,
         HealthKit.HKCategoryValueSleepAnalysis.asleepREM,
         HealthKit.HKCategoryValueSleepAnalysis.asleepUnspecified,
-      ];
+      ] : [3, 4, 5, 2]; // Numeric fallbacks for sleep values
 
       samples.forEach(sample => {
         if (asleepValues.includes(sample.value as any)) {
@@ -191,8 +218,10 @@ class HealthKitService {
       const totalHours = totalMs / (1000 * 60 * 60);
 
       // Calculate quality based on sleep stages
-      const deepSleep = samples.filter(s => s.value === HealthKit!.HKCategoryValueSleepAnalysis.asleepDeep).length;
-      const remSleep = samples.filter(s => s.value === HealthKit!.HKCategoryValueSleepAnalysis.asleepREM).length;
+      const deepValue = HealthKit.HKCategoryValueSleepAnalysis?.asleepDeep ?? 4;
+      const remValue = HealthKit.HKCategoryValueSleepAnalysis?.asleepREM ?? 5;
+      const deepSleep = samples.filter(s => s.value === deepValue).length;
+      const remSleep = samples.filter(s => s.value === remValue).length;
       const quality = Math.min(100, 50 + deepSleep * 10 + remSleep * 5);
 
       return { totalHours: Math.round(totalHours * 10) / 10, quality };
@@ -209,9 +238,10 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryQuantitySamples(
-        HealthKit.HKQuantityTypeIdentifier.activeEnergyBurned,
+        getQuantityId('activeEnergyBurned'),
         { from: startDate, to: endDate }
       );
+      if (!samples || samples.length === 0) return 0;
       return Math.round(samples.reduce((sum, s) => sum + s.quantity, 0));
     } catch (error) {
       console.error('Failed to get active calories:', error);
@@ -226,10 +256,10 @@ class HealthKitService {
 
     try {
       const samples = await HealthKit.default.queryQuantitySamples(
-        HealthKit.HKQuantityTypeIdentifier.bodyMass,
+        getQuantityId('bodyMass'),
         { from: startDate, to: endDate }
       );
-      if (samples.length === 0) return null;
+      if (!samples || samples.length === 0) return null;
       // Return most recent
       return Math.round(samples[samples.length - 1].quantity * 10) / 10;
     } catch (error) {
