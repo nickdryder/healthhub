@@ -243,26 +243,28 @@ export default function LogScreen() {
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Track your health data manually</Text>
         </View>
 
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.typeSelector}
         >
-          {logTypes.map((type) => (
-            <TouchableOpacity
-              key={type.id}
-              style={[styles.typeButton, { backgroundColor: colors.card }, activeType === type.id && { borderColor: colors.primary, backgroundColor: `${colors.primary}08` }]}
-              onPress={() => setActiveType(type.id)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.typeIcon, { backgroundColor: `${type.color}15` }]}>
-                <Ionicons name={type.icon} size={24} color={type.color} />
-              </View>
-              <Text style={[styles.typeLabel, { color: colors.textSecondary }, activeType === type.id && { color: colors.primary }]}>
-                {type.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {logTypes
+            .filter(type => type.id !== 'cycle' || cycleTrackingEnabled)
+            .map((type) => (
+              <TouchableOpacity
+                key={type.id}
+                style={[styles.typeButton, { backgroundColor: colors.card }, activeType === type.id && { borderColor: colors.primary, backgroundColor: `${colors.primary}08` }]}
+                onPress={() => setActiveType(type.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.typeIcon, { backgroundColor: `${type.color}15` }]}>
+                  <Ionicons name={type.icon} size={24} color={type.color} />
+                </View>
+                <Text style={[styles.typeLabel, { color: colors.textSecondary }, activeType === type.id && { color: colors.primary }]}>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
         </ScrollView>
 
         <View style={styles.form}>

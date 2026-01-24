@@ -77,9 +77,14 @@ class HealthKitService {
       await HealthKit.default.requestAuthorization(permissions.read, permissions.write);
       console.log('HealthKit permissions granted');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to request HealthKit permissions:', error);
-      return false;
+      // Provide more specific error info
+      const errorMessage = error?.message || String(error);
+      if (errorMessage.includes('denied') || errorMessage.includes('authorization')) {
+        throw new Error('HEALTHKIT_CAPABILITY_MISSING');
+      }
+      throw error;
     }
   }
 

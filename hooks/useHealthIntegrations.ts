@@ -77,27 +77,42 @@ export function useHealthIntegrations() {
       const initialized = await healthKitService.initialize();
       if (!initialized) throw new Error('Failed to initialize HealthKit');
 
-      const hasPermission = await healthKitService.requestPermissions();
-      if (!hasPermission) throw new Error('Permission denied');
-
       const isReal = healthKitService.isUsingRealHealthKit();
 
       if (!isReal) {
         // Don't sync in mock mode - just show message
         Alert.alert(
-          'Development Build Required', 
+          'Development Build Required',
           'Apple Health requires a development build to sync real data.\n\nTo enable:\n1. Run: npx expo prebuild\n2. Run: npx expo run:ios\n\nFitbit works in Expo Go if you want to sync data now.',
           [{ text: 'OK' }]
         );
         return false;
       }
+
+      const hasPermission = await healthKitService.requestPermissions();
+      if (!hasPermission) throw new Error('Permission denied');
+
       const synced = await healthKitService.syncToSupabase(user.id);
       if (!synced) throw new Error('Failed to sync data');
 
       Alert.alert('Connected!', 'Apple Health is now connected and syncing real data.');
       return true;
     } catch (error: any) {
-      Alert.alert('Connection Failed', error.message || 'Could not connect to Apple Health.');
+      const errorMessage = error?.message || '';
+      if (errorMessage === 'HEALTHKIT_CAPABILITY_MISSING' || errorMessage.includes('denied')) {
+        Alert.alert(
+          'HealthKit Capability Required',
+          'The HealthKit capability needs to be enabled in Apple Developer Portal.\n\n' +
+          '1. Go to developer.apple.com\n' +
+          '2. Find app ID: com.nickdryder.healthhub\n' +
+          '3. Enable "HealthKit" capability\n' +
+          '4. Rebuild the app with EAS\n\n' +
+          'This is a one-time setup.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Connection Failed', errorMessage || 'Could not connect to Apple Health.');
+      }
       return false;
     } finally {
       setLoading(prev => ({ ...prev, apple_health: false }));
